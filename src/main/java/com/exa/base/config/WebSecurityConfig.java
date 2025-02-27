@@ -30,12 +30,12 @@ public class WebSecurityConfig {
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.jdbcAuthentication()
-                .usersByUsernameQuery(usersQuery)
-                .authoritiesByUsernameQuery(rolesQuery)
-                .dataSource(dataSource)
-                .passwordEncoder(bCryptPasswordEncoder);
+            .usersByUsernameQuery("SELECT EMAIL, PASSWORD, ACTIVO FROM USUARIO WHERE EMAIL = ?")
+            .authoritiesByUsernameQuery("SELECT U.EMAIL, R.NOMBRE FROM USUARIO U INNER JOIN USUARIO_ROLE RU ON(U.ID = RU.USUARIO_ID) INNER JOIN ROLE R ON(RU.ROLE_ID = R.ID) WHERE U.EMAIL = ?")
+            .dataSource(dataSource)
+            .passwordEncoder(bCryptPasswordEncoder);
     }
-
+    
     @Bean
     public SecurityFilterChain formLoginFilterChain(HttpSecurity http) throws Exception {
         http
@@ -44,6 +44,7 @@ public class WebSecurityConfig {
                     .anyRequest().authenticated())
             .formLogin(form -> form
                     .loginPage("/login")
+                    .usernameParameter("email") // Usa email en vez de username
                     .defaultSuccessUrl("/inicio", true)
                     .failureUrl("/login?error=true")
                     .permitAll()
