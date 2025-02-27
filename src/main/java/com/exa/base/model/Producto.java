@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 @Entity
 @Data
 public class Producto {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,6 +15,5 @@ public class Producto {
     private String nombre;
     private String descripcion;
     private BigDecimal precio;
-    private int stock;
     private String imagenUrl;
 }
