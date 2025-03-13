@@ -1,66 +1,73 @@
 package com.exa.base.controller;
 
-import com.exa.base.model.ItemCarrito;
+import com.exa.base.model.Carrito;
 import com.exa.base.model.Producto;
+import com.exa.base.model.Usuario;
+import com.exa.base.service.CarritoService;
+import org.springframework.web.bind.annotation.RequestMapping;
 import com.exa.base.service.ProductoService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/carrito")
 public class CarritoController {
 
-    private final ProductoService productoService;
+    @Autowired
+    private ProductoService productoService;
 
     @Autowired
-    public CarritoController(ProductoService productoService) {
-        this.productoService = productoService;
+    private CarritoService carritoService;
+
+    // Agregar producto al carrito (POST)
+    @PostMapping("/agregar")
+    public String agregarAlCarrito(
+            @RequestParam("id") Long productoId,
+            @RequestParam("cantidad") int cantidad,
+            Authentication authentication) {
+
+        // Verificar autenticación
+        if (!authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        // Obtener usuario actual
+        Usuario usuario = (Usuario) authentication.getPrincipal();
+
+        // Buscar producto
+        Producto producto = productoService.obtenerPorId(productoId);
+        if (producto == null) {
+            return "redirect:/inicio?error=producto_no_encontrado";
+        }
+
+        // Agregar al carrito
+        carritoService.agregarProducto(usuario.getId(), productoId, cantidad);
+        return "redirect:/inicio?success=producto_agregado";
     }
 
-    @PostMapping("/agregar")
-    public String agregarAlCarrito(@RequestParam("id") Long id, 
-                                  @RequestParam("cantidad") int cantidad, 
-                                  HttpSession session) {
-        
-        Producto producto = productoService.obtenerPorId(id);
-        if (producto == null) {
-            return "redirect:/inicio";
+    // Mostrar vista del carrito (GET)
+    @GetMapping
+    public String verCarrito(Authentication authentication, Model model) {
+        // Verificar autenticación
+        if (!authentication.isAuthenticated()) {
+            return "redirect:/login";
         }
 
-        // Manejo seguro del carrito en sesión
-        List<ItemCarrito> carrito;
-        Object carritoObj = session.getAttribute("carrito");
+        // Obtener usuario actual
+        Usuario usuario = (Usuario) authentication.getPrincipal();
 
-        if (carritoObj instanceof List<?>) {
-            @SuppressWarnings("unchecked")
-            List<ItemCarrito> temp = (List<ItemCarrito>) carritoObj;
-            carrito = temp;
-        } else {
-            carrito = new ArrayList<>();
-        }
+        // Obtener carrito desde la base de datos
+        Carrito carrito = carritoService.obtenerCarritoPorUsuario(usuario.getId())
+                .orElse(new Carrito());
 
-        // Verificar si el producto ya existe en el carrito
-        boolean productoExistente = false;
-        for (ItemCarrito item : carrito) {
-            if (item.getProducto().getId().equals(id)) {
-                item.setCantidad(item.getCantidad() + cantidad);
-                productoExistente = true;
-                break;
-            }
-        }
-
-        // Agregar nuevo item si no existe
-        if (!productoExistente) {
-            carrito.add(new ItemCarrito(producto, cantidad));
-        }
-
-        // Actualizar sesión
-        session.setAttribute("carrito", carrito);
-        return "redirect:/inicio";
+        // Pasar datos a la vista
+        model.addAttribute("carrito", carrito);
+        return "carrito"; // Debe existir carrito.html en src/main/resources/templates
     }
 }

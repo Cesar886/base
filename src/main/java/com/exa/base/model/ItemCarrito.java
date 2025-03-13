@@ -1,12 +1,22 @@
 package com.exa.base.model;
 
-import lombok.AllArgsConstructor;
+import jakarta.persistence.*;
 import lombok.Data;
-import java.io.Serializable;
 
 @Data
-@AllArgsConstructor
-public class ItemCarrito implements Serializable {
+@Entity
+public class ItemCarrito {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "CARRITO_ID")
+    private Carrito carrito;
+
+    @ManyToOne
+    @JoinColumn(name = "PRODUCTO_ID")
     private Producto producto;
+
     private int cantidad;
 }
