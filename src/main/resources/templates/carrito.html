@@ -5,17 +5,16 @@
 </head>
 <body>
     <h1>Carrito de Compras</h1>
-    <div th:if="${carrito.items.empty}">
-        <p>El carrito está vacío.</p>
+    <p>Bienvenido, <span th:text="${email}"></span></p>
+
+    <!-- Mostrar detalles del carrito -->
+    <div th:if="${carrito}">
+        <p>Tu carrito tiene ID: <span th:text="${carrito.id}"></span></p>
+        <!-- Agrega más detalles del carrito aquí -->
     </div>
-    <div th:unless="${carrito.items.empty}">
-        <ul>
-            <li th:each="item : ${carrito.items}">
-                <span th:text="${item.producto.nombre}"></span> - 
-                <span th:text="${item.cantidad}"></span> unidades
-            </li>
-        </ul>
+
+    <div th:unless="${carrito}">
+        <p>No tienes productos en tu carrito.</p>
     </div>
-    <a href="/inicio">Seguir comprando</a>
 </body>
 </html>
